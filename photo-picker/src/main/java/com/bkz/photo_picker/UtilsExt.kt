@@ -43,6 +43,7 @@ fun Context.insertImageUri(
 ): Uri? = this@insertImageUri.insertImageUri(ContentValues().apply {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
         put(MediaStore.MediaColumns.DISPLAY_NAME, file.name)
+        put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
         put(MediaStore.MediaColumns.RELATIVE_PATH, relativePath)
     } else {
         @Suppress("DEPRECATION")
