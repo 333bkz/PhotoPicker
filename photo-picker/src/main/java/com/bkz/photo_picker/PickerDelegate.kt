@@ -96,7 +96,7 @@ class PickerDelegate(
         if (!appDir.exists()) {
             appDir.mkdir()
         }
-        val file = File(appDir, System.currentTimeMillis().toString())
+        val file = File(appDir, "${System.currentTimeMillis()}.jpg")
         val uCrop = UCrop.of(it, Uri.fromFile(file))
         uCrop.withOptions(options)
         uCrop.intent(contextDelegate)?.let {
@@ -105,7 +105,7 @@ class PickerDelegate(
     }
 
     private fun launchCamera() {
-        val name = System.currentTimeMillis().toString()
+        val name = "${System.currentTimeMillis()}.jpg"
         cameraUri = contextDelegate.context.cameraUriExpand(name)
         cameraUri?.let {
             contextDelegate.context.cameraImageUri(it) { uri ->
