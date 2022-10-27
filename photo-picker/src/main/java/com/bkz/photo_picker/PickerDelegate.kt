@@ -13,8 +13,8 @@ import com.yalantis.ucrop.util.FileUtils
 import java.io.File
 
 class PickerDelegate(
-    private val contextDelegate: ContextDelegate,
-    private val result: (Uri, String) -> Unit
+    private val context: Context,
+    private val result: (Uri, String) -> Unit,
 ) {
 
     private var cameraUri: Uri? = null
@@ -29,16 +29,16 @@ class PickerDelegate(
     }
 
     //相册
-    private var albumLauncher: ActivityResultLauncher<Array<String>>? =
-        contextDelegate.registerForActivityResult(ActivityResultContracts.OpenDocument()) {
+    private var albumLauncher: ActivityResultLauncher<Array<String>> =
+        context.registerForActivityResult(ActivityResultContracts.OpenDocument()) {
             it?.run {
                 crop(this)
             }
         }
 
     //相机
-    private val cameraLauncher: ActivityResultLauncher<Uri>? =
-        contextDelegate.registerForActivityResult(ActivityResultContracts.TakePicture()) {
+    private val cameraLauncher: ActivityResultLauncher<Uri> =
+        context.registerForActivityResult(ActivityResultContracts.TakePicture()) {
             if (it) {
                 cameraUri?.run {
                     crop(this)
@@ -49,13 +49,13 @@ class PickerDelegate(
         }
 
     //裁剪
-    private val cropLauncher: ActivityResultLauncher<Intent>? =
-        contextDelegate.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+    private val cropLauncher: ActivityResultLauncher<Intent> =
+        context.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
             if (it.resultCode == Activity.RESULT_OK) {
                 it.data?.run {
                     val uri = UCrop.getOutput(this)
                     uri?.run {
-                        val path = FileUtils.getPath(contextDelegate.context, uri)
+                        val path = FileUtils.getPath(context.context, uri)
                         result.invoke(this, path)
                     }
                 }
@@ -63,12 +63,12 @@ class PickerDelegate(
         }
 
     //权限
-    private val cameraPermissionLauncher: ActivityResultLauncher<Array<String>>? =
-        contextDelegate.registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
+    private val cameraPermissionLauncher: ActivityResultLauncher<Array<String>> =
+        context.registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
             it.forEach { item ->
                 if (item.value == false) {
                     Toast.makeText(
-                        contextDelegate.context, "我们需要相关权限，才能实现功能，请开启应用的相关权限", Toast.LENGTH_SHORT
+                        context.context, "我们需要相关权限，才能实现功能，请开启应用的相关权限", Toast.LENGTH_SHORT
                     ).show()
                     return@registerForActivityResult
                 }
@@ -77,12 +77,12 @@ class PickerDelegate(
         }
 
     //权限
-    private val albumPermissionLauncher: ActivityResultLauncher<Array<String>>? =
-        contextDelegate.registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
+    private val albumPermissionLauncher: ActivityResultLauncher<Array<String>> =
+        context.registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
             it.forEach { item ->
                 if (item.value == false) {
                     Toast.makeText(
-                        contextDelegate.context, "我们需要相关权限，才能实现功能，请开启应用的相关权限", Toast.LENGTH_SHORT
+                        context.context, "我们需要相关权限，才能实现功能，请开启应用的相关权限", Toast.LENGTH_SHORT
                     ).show()
                     return@registerForActivityResult
                 }
@@ -91,7 +91,7 @@ class PickerDelegate(
         }
 
     private fun crop(it: Uri) {
-        val path = contextDelegate.context.appCacheFile("image").absolutePath
+        val path = context.context.appCacheFile("image").absolutePath
         val appDir = File(path)
         if (!appDir.exists()) {
             appDir.mkdir()
@@ -99,27 +99,25 @@ class PickerDelegate(
         val file = File(appDir, "${System.currentTimeMillis()}.jpg")
         val uCrop = UCrop.of(it, Uri.fromFile(file))
         uCrop.withOptions(options)
-        uCrop.intent(contextDelegate)?.let {
-            cropLauncher?.launch(it)
-        }
+        cropLauncher.launch(uCrop.getIntent(context.context))
     }
 
     private fun launchCamera() {
         val name = "${System.currentTimeMillis()}.jpg"
-        cameraUri = contextDelegate.context.cameraUriExpand(name)
+        cameraUri = context.context.cameraUriExpand(name)
         cameraUri?.let {
-            contextDelegate.context.cameraImageUri(it) { uri ->
-                cameraLauncher?.launch(uri)
+            context.context.cameraImageUri(it) { uri ->
+                cameraLauncher.launch(uri)
             }
         }
     }
 
     private fun launchAlbum() {
-        albumLauncher?.launch(arrayOf("image/*"))
+        albumLauncher.launch(arrayOf("image/*"))
     }
 
     fun openCamera() {
-        cameraPermissionLauncher?.launch(
+        cameraPermissionLauncher.launch(
             arrayOf(
                 Manifest.permission.CAMERA,
                 Manifest.permission.READ_EXTERNAL_STORAGE,
@@ -129,7 +127,7 @@ class PickerDelegate(
     }
 
     fun openAlbum() {
-        albumPermissionLauncher?.launch(
+        albumPermissionLauncher.launch(
             arrayOf(
                 Manifest.permission.READ_EXTERNAL_STORAGE,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE
@@ -138,10 +136,10 @@ class PickerDelegate(
     }
 
     fun recycle() {
-        albumLauncher?.unregister()
-        cropLauncher?.unregister()
-        cameraLauncher?.unregister()
-        cameraPermissionLauncher?.unregister()
-        albumPermissionLauncher?.unregister()
+        albumLauncher.unregister()
+        cropLauncher.unregister()
+        cameraLauncher.unregister()
+        cameraPermissionLauncher.unregister()
+        albumPermissionLauncher.unregister()
     }
 }

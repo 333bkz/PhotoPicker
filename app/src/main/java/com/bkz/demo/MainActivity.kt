@@ -4,7 +4,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import com.bkz.photo_picker.ContextDelegate
+import com.bkz.photo_picker.Context
 import com.bkz.photo_picker.PickerDelegate
 
 class MainActivity : AppCompatActivity() {
@@ -14,7 +14,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        picker = PickerDelegate(ContextDelegate(this)) { _, path ->
+        picker = PickerDelegate(Context.Activity(this)) { _, path ->
             findViewById<TextView>(R.id.result).text = path
         }.also {
             it.options.withAspectRatio(1.5f, 1f)
